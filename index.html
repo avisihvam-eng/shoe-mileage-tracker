@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoe Mileage Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #ffa500;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ffa500;
+        }
+        
+        .stat-card h3 {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffa500;
+        }
+        
+        .shoes-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .shoes-section h2 {
+            margin-bottom: 20px;
+            color: #ffa500;
+        }
+        
+        .shoe-item {
+            background: #1a1a1a;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .shoe-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .shoe-mileage {
+            color: #ffa500;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        input, button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        
+        input {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #444;
+            width: 100%;
+        }
+        
+        button {
+            background: #ffa500;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #ffb84d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SHOE MILEAGE TRACKER</h1>
+            <p>Track running shoe mileage in your browser. No login, no backend, no friction.</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Distance</h3>
+                <div class="value" id="totalDistance">0</div>
+                <small>km</small>
+            </div>
+            <div class="stat-card">
+                <h3>Shoes</h3>
+                <div class="value" id="shoeCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average Run</h3>
+                <div class="value" id="avgRun">0</div>
+                <small>km</small>
+            </div>
+        </div>
+        
+        <div class="shoes-section">
+            <h2>Your Shoes</h2>
+            <div id="shoesList"></div>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #444; padding-top: 20px;">
+                <h3>Add New Shoe</h3>
+                <div class="form-group">
+                    <input type="text" id="shoeName" placeholder="Shoe name (e.g., Adizero Evo SL)" />
+                </div>
+                <button onclick="addShoe()">Add Shoe</button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h3>Log Run</h3>
+                <div class="form-group">
+                    <input type="number" id="mileageInput" placeholder="Miles/km" step="0.1" />
+                </div>
+                <div class="form-group">
+                    <select id="shoeSelect" style="background: #1a1a1a; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; width: 100%;">
+                        <option>Select a shoe</option>
+                    </select>
+                </div>
+                <button onclick="logRun()">Log Run</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let shoes = JSON.parse(localStorage.getItem('shoes')) || [];
+        let runs = JSON.parse(localStorage.getItem('runs')) || [];
+        
+        function saveData() {
+            localStorage.setItem('shoes', JSON.stringify(shoes));
+            localStorage.setItem('runs', JSON.stringify(runs));
+        }
+        
+        function addShoe() {
+            const name = document.getElementById('shoeName').value;
+            if (name.trim()) {
+                shoes.push({id: Date.now(), name: name, mileage: 0});
+                document.getElementById('shoeName').value = '';
+                saveData();
+                updateUI();
+            }
+        }
+        
+        function logRun() {
+            const mileage = parseFloat(document.getElementById('mileageInput').value);
+            const shoeSelect = document.getElementById('shoeSelect');
+            const selectedIndex = shoeSelect.selectedIndex - 1;
+            
+            if (mileage > 0 && selectedIndex >= 0) {
+                shoes[selectedIndex].mileage += mileage;
+                runs.push({shoeId: shoes[selectedIndex].id, mileage: mileage, date: new Date().toISOString()});
+                document.getElementById('mileageInput').value = '';
+                saveData();
+                updateUI();
+            }
+        }
+        
+        function updateUI() {
+            // Update stats
+            const totalMileage = shoes.reduce((sum, shoe) => sum + shoe.mileage, 0);
+            document.getElementById('totalDistance').textContent = totalMileage.toFixed(1);
+            document.getElementById('shoeCount').textContent = shoes.length;
+            document.getElementById('avgRun').textContent = runs.length > 0 ? (totalMileage / runs.length).toFixed(1) : '0';
+            
+            // Update shoes list
+            const shoesList = document.getElementById('shoesList');
+            shoesList.innerHTML = shoes.map(shoe => `
+                <div class="shoe-item">
+                    <span class="shoe-name">${shoe.name}</span>
+                    <span class="shoe-mileage">${shoe.mileage.toFixed(1)} km</span>
+                </div>
+            `).join('');
+            
+            // Update shoe select
+            const shoeSelect = document.getElementById('shoeSelect');
+            shoeSelect.innerHTML = '<option>Select a shoe</option>' + shoes.map(shoe => `<option>${shoe.name}</option>`).join('');
+        }
+        
+        updateUI();
+    </script>
+</body>
+</html>
